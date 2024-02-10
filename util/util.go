@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-const STOCKHOLM_TIMEZONE = "Europe/Stockholm"
+const Stockholm_Timezone = "Europe/Stockholm"
 
 func GenerateCredentials(username, password, rawPem []byte) (cred string, err error) {
 	var loc *time.Location
-	if loc, err = time.LoadLocation(STOCKHOLM_TIMEZONE); err != nil {
+	if loc, err = time.LoadLocation(Stockholm_Timezone); err != nil {
 		return
 	}
 	ms := time.Now().In(loc).Unix() * 1000

@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/0dayfall/nordnet/util/models"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/denro/nordnet/util/models"
 )
 
 var privateUnmarshalTests = []struct {

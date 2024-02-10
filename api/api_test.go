@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/denro/nordnet/util/models"
+	. "github.com/0dayfall/nordnet/util/models"
 )
 
 var defSessionKey = "DEFAULTSESSION"
@@ -978,6 +978,6 @@ func setupTestServer(t *testing.T, method, path, session string, stubData []byte
 
 func setup(t *testing.T, method, path, session, stubData string) (*APIClient, *httptest.Server) {
 	testServer := setupTestServer(t, method, path, session, []byte(stubData))
-	client := &APIClient{URL: testServer.URL, Service: NNSERVICE, Version: NNAPIVERSION, SessionKey: session}
+	client := &APIClient{URL: testServer.URL, Service: service, Version: version, SessionKey: session}
 	return client, testServer
 }

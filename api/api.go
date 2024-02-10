@@ -1,7 +1,7 @@
 /*
-	Package api includes the HTTP client used to access the REST JSON API.
+Package api includes the HTTP client used to access the REST JSON API.
 
-	Information about specific endpoints and their parameters can be found at: https://api.test.nordnet.se/api-docs/index.html
+Information about specific endpoints and their parameters can be found at: https://api.test.nordnet.se/api-docs/index.html
 */
 package api
 
@@ -9,33 +9,30 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
 
-	. "github.com/denro/nordnet/util/models"
+	. "github.com/0dayfall/nordnet/util/models"
 )
 
 const (
-	NNBASEURL     = `https://www.nordnet.se/next`
-	NNTESTBASEURL = `https://api.test.nordnet.se/next`
-	NNSERVICE     = `NEXTAPI`
-	NNAPIVERSION  = `2`
+	baseURL = `https://www.nordnet.se/next`
+	service = `NEXTAPI`
+	version = `2`
 )
 
 var (
 	TooManyRequestsError = errors.New("Too Many Requests, please wait for 10 seconds before trying again")
 )
 
-// Error type for errors returned by the API
 type APIError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-// APIError implements the error interface
 func (e APIError) Error() string {
 	return fmt.Sprintf("%v: %v", e.Code, e.Message)
 }
@@ -55,9 +52,9 @@ type APIClient struct {
 // Constructor function takes the credentials string produced by the util package.
 func NewAPIClient(credentials string) *APIClient {
 	return &APIClient{
-		URL:         NNBASEURL,
-		Service:     NNSERVICE,
-		Version:     NNAPIVERSION,
+		URL:         baseURL,
+		Service:     service,
+		Version:     version,
 		Credentials: credentials,
 	}
 }
@@ -65,9 +62,9 @@ func NewAPIClient(credentials string) *APIClient {
 // Constructor function for creating a client pointing to the NEXT test environment.
 func NewAPITestClient(credentials string) *APIClient {
 	return &APIClient{
-		URL:         NNTESTBASEURL,
-		Service:     NNSERVICE,
-		Version:     NNAPIVERSION,
+		URL:         baseURL,
+		Service:     service,
+		Version:     version,
 		Credentials: credentials,
 	}
 }
@@ -309,7 +306,7 @@ func (c *APIClient) Touch() (res *LoggedInStatus, err error) {
 	return
 }
 
-//Get all tradable markets. Market 80 is the smart order market. Instruments that can be traded on 2 or more markets gets a tradable on the smart order market. Orders entered with the smart order tradable get smart order routed with the current Nordnet best execution policy.
+// Get all tradable markets. Market 80 is the smart order market. Instruments that can be traded on 2 or more markets gets a tradable on the smart order market. Orders entered with the smart order tradable get smart order routed with the current Nordnet best execution policy.
 func (c *APIClient) Markets() (res []Market, err error) {
 	res = []Market{}
 	err = c.Perform("GET", "markets", nil, &res)
@@ -404,7 +401,7 @@ func (c *APIClient) Perform(method, path string, params *Params, res interface{}
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}

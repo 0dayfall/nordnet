@@ -3,7 +3,7 @@ package feed
 import (
 	"encoding/json"
 
-	"github.com/denro/nordnet/util/models"
+	"github.com/0dayfall/nordnet/util/models"
 )
 
 type PrivateFeed struct {
@@ -16,6 +16,26 @@ func NewPrivateFeed(address string) (*PrivateFeed, error) {
 		return nil, err
 	}
 	return &PrivateFeed{f}, nil
+}
+
+// Starts reading from the connection and sends data through given channels
+func (pf *PrivateFeed) Dispatch(msgChan chan *PrivateMsg, errChan chan error) {
+	go func(d *json.Decoder, mc chan<- *PrivateMsg, ec chan<- error) {
+		var (
+			pMsg *PrivateMsg
+			err  error
+		)
+
+		for {
+			pMsg = new(PrivateMsg)
+			if err = d.Decode(pMsg); err != nil {
+				ec <- err
+			}
+			msgChan <- pMsg
+		}
+	}(pf.decoder, msgChan, errChan)
+
+	return
 }
 
 // Order data section in the private message
@@ -53,26 +73,6 @@ func (pm *PrivateMsg) UnmarshalJSON(b []byte) (err error) {
 		}
 		pm.Data = trade
 	}
-
-	return
-}
-
-// Starts reading from the connection and sends data through given channels
-func (pf *PrivateFeed) Dispatch(msgChan chan *PrivateMsg, errChan chan error) {
-	go func(d *json.Decoder, mc chan<- *PrivateMsg, ec chan<- error) {
-		var (
-			pMsg *PrivateMsg
-			err  error
-		)
-
-		for {
-			pMsg = new(PrivateMsg)
-			if err = d.Decode(pMsg); err != nil {
-				ec <- err
-			}
-			msgChan <- pMsg
-		}
-	}(pf.decoder, msgChan, errChan)
 
 	return
 }
