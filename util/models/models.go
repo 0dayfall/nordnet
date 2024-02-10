@@ -1,91 +1,9 @@
 // Package models represents data returned by the API and in the private feed
 package models
 
-type SystemStatus struct {
-	Timestamp     int64  `json:"timestamp"`
-	ValidVersion  bool   `json:"valid_version"`
-	SystemRunnnig bool   `json:"system_running"`
-	Message       string `json:"message"`
-}
-
-type Account struct {
-	Accno         int64  `json:"accno"`
-	Type          string `json:"type"`
-	Default       bool   `json:"default"`
-	Alias         string `json:"alias"`
-	Blocked       bool   `json:"blocked"`
-	BlockedReason string `json:"blocked_reason"`
-}
-
-type AccountInfo struct {
-	AccountCurrency            string `json:"account_currency"`
-	AccountCredit              Amount `json:"account_credit"`
-	AccountSum                 Amount `json:"account_sum"`
-	Collateral                 Amount `json:"collateral"`
-	CreditAccountSum           Amount `json:"credit_account_sum"`
-	ForwardSum                 Amount `json:"forward_sum"`
-	FutureSum                  Amount `json:"future_sum"`
-	UnrealizedFutureProfitLoss Amount `json:"unrealized_future_profit_loss"`
-	FullMarketvalue            Amount `json:"full_marketvalue"`
-	Interest                   Amount `json:"interest"`
-	IntradayCredit             Amount `json:"intraday_credit"`
-	LoanLimit                  Amount `json:"loan_limit"`
-	OwnCapital                 Amount `json:"own_capital"`
-	OwnCapitalMorning          Amount `json:"own_capital_morning"`
-	PawnValue                  Amount `json:"pawn_value"`
-	TradingPower               Amount `json:"trading_power"`
-}
-
 type Amount struct {
 	Value    float64 `json:"value"`
 	Currency string  `json:"currency"`
-}
-
-type LedgerInformation struct {
-	TotalAccIntDeb  Amount   `json:"total_acc_int_deb"`
-	TotalAccIntCred Amount   `json:"total_acc_int_cred"`
-	Total           Amount   `json:"total"`
-	Ledgers         []Ledger `json:"ledgers"`
-}
-
-type Ledger struct {
-	Currency      string `json:"currency"`
-	AccountSum    Amount `json:"account_sum"`
-	AccountSumAcc Amount `json:"account_sum_acc"`
-	AccIntDeb     Amount `json:"acc_int_deb"`
-	AccIntCred    Amount `json:"acc_int_cred"`
-	ExchangeRate  Amount `json:"exchange_rate"`
-}
-
-type Order struct {
-	Accno               int64               `json:"accno"`
-	OrderId             int64               `json:"order_id"`
-	Price               Amount              `json:"price"`
-	Volume              float64             `json:"volume"`
-	Tradable            TradableId          `json:"tradable"`
-	OpenVolume          float64             `json:"open_volume"`
-	TradedVolume        float64             `json:"traded_volume"`
-	Side                string              `json:"side"`
-	Modified            int64               `json:"modified"`
-	Reference           string              `json:"reference"`
-	ActivationCondition ActivationCondition `json:"activation_condition"`
-	PriceCondition      string              `json:"price_condition"`
-	VolumeCondition     string              `json:"volume_condition"`
-	Validity            Validity            `json:"validity"`
-	ActionState         string              `json:"action_state"`
-	OrderState          string              `json:"order_state"`
-}
-
-type TradableId struct {
-	Identifier string `json:"identifier"`
-	MarketId   int64  `json:"market_id"`
-}
-
-type ActivationCondition struct {
-	Type             string  `json:"type"`
-	TrailingValue    float64 `json:"trailing_value"`
-	TriggerValue     float64 `json:"trigger_value"`
-	TriggerCondition string  `json:"trigger_condition"`
 }
 
 type Validity struct {
@@ -111,33 +29,6 @@ type Position struct {
 	AcqPriceAcc    Amount     `json:"acq_price_acc"`
 	AcqPrice       Amount     `json:"acq_price"`
 	MorningPrice   Amount     `json:"morning_price"`
-}
-
-type Instrument struct {
-	InstrumentId        int64            `json:"instrument_id"`
-	Tradables           []Tradable       `json:"tradables"`
-	Currency            string           `json:"currency"`
-	InstrumentGroupType string           `json:"instrument_group_type"`
-	InstrumentType      string           `json:"instrument_type"`
-	Multiplier          float64          `json:"multiplier"`
-	Symbol              string           `json:"symbol"`
-	IsinCode            string           `json:"isin_code"`
-	MarketView          string           `json:"market_view"`
-	StrikePrice         float64          `json:"strike_price"`
-	NumberOfSecurities  float64          `json:"number_of_securities"`
-	ProspectusUrl       string           `json:"prospectus_url"`
-	ExpirationDate      string           `json:"expiration_date"`
-	Name                string           `json:"name"`
-	Sector              string           `json:"sector"`
-	SectorGroup         string           `json:"sector_group"`
-	Underlyings         []UnderlyingInfo `json:"underlyings"`
-}
-
-type Tradable struct {
-	TradableId
-	TickSizeId   int64   `json:"tick_size_id"`
-	LotSize      float64 `json:"lot_size"`
-	DisplayOrder int64   `json:"display_order"`
 }
 
 type UnderlyingInfo struct {

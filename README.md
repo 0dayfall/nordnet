@@ -1,8 +1,8 @@
 # Nordnet
 
-[![Build Status](https://travis-ci.org/denro/nordnet.svg?branch=master)](https://travis-ci.org/denro/nordnet)
-[![GoDoc](https://godoc.org/github.com/denro/nordnet?status.svg)](http://godoc.org/github.com/denro/nordnet)
-[![Go Report Card](https://goreportcard.com/badge/github.com/denro/nordnet)](https://goreportcard.com/report/github.com/denro/nordnet)
+[![Build Status](https://travis-ci.org/0dayfall/nordnet.svg?branch=master)](https://travis-ci.org/0dayfall/nordnet)
+[![GoDoc](https://godoc.org/github.com/0dayfall/nordnet?status.svg)](http://godoc.org/github.com/0dayfall/nordnet)
+[![Go Report Card](https://goreportcard.com/badge/github.com/0dayfall/nordnet)](https://goreportcard.com/report/github.com/0dayfall/nordnet)
 
 Go implementation of the Nordnet External API.
 
@@ -11,7 +11,7 @@ https://api.test.nordnet.se/api-docs/index.html
 
 ## Installation
 
-`go get github.com/denro/nordnet`
+`go get github.com/0dayfall/nordnet`
 
 ## Usage
 
@@ -23,8 +23,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/denro/nordnet/api"
-	"github.com/denro/nordnet/util"
+	"github.com/0dayfall/nordnet/api"
+	"github.com/0dayfall/nordnet/util"
 )
 
 var (
@@ -51,7 +51,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/denro/nordnet/feed"
+	"github.com/0dayfall/nordnet/feed"
 )
 
 var (
@@ -72,11 +72,3 @@ func main() {
 	}
 }
 ```
-
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
