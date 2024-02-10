@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"log/slog"
 
-	"github.com/0dayfall/nordnet"
+	"github.com/0dayfall/nordnet/feed"
 )
 
 func main() {
@@ -19,17 +18,20 @@ func main() {
 	defer stop()
 
 	go func() error {
-		publicFeed := nordnet.NewPublicFeed("https://api.test.nordnet.se/next/2")
-		msgChan := make(chan *nordnet.PublicMsg)
+		publicFeed, err := feed.NewPublicFeed("https://api.test.nordnet.se/next/2")
+		if err != nil {
+			logger.Error("Error: %v", err)
+		}
+		msgChan := make(chan *feed.PublicMsg)
 		errChan := make(chan error)
 		publicFeed.Dispatch(msgChan, errChan)
 
 		for {
 			select {
 			case msg := <-msgChan:
-				logger.Info(msg)
+				logger.Info("private feed: %v", msg)
 			case err := <-errChan:
-				logger.Error(err)
+				logger.Error("Error: %v", err)
 				return err
 			case <-ctx.Done():
 				logger.Info("Shutdown public feed")
@@ -39,20 +41,23 @@ func main() {
 	}()
 
 	go func() error {
-		privateFeed := nordnet.NewPrivateFeed("https://api.test.nordnet.se/next/2")
-		msgChan := make(chan *nordnet.PrivateMsg)
+		privateFeed, err := feed.NewPrivateFeed("https://api.test.nordnet.se/next/2")
+		if err != nil {
+			logger.Error("Error: %v", err)
+		}
+		msgChan := make(chan *feed.PrivateMsg)
 		errChan := make(chan error)
 		privateFeed.Dispatch(msgChan, errChan)
 
 		for {
 			select {
 			case msg := <-msgChan:
-				log.Println(msg)
+				logger.Info("private feed: %v", msg)
 			case err := <-errChan:
-				log.Println(err)
+				logger.Error("Error: %v", err)
 				return err
 			case <-ctx.Done():
-				log.Println("Shutdown private feed")
+				logger.Info("Shutdown private feed")
 				return nil
 			}
 		}
@@ -61,7 +66,7 @@ func main() {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Bye from Nordnet trading algorithm!")
+			logger.Info("Bye from Nordnet trading algorithm!")
 			return
 		}
 	}
