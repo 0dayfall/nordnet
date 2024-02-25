@@ -14,6 +14,10 @@ import (
 	"github.com/0dayfall/nordnet/util"
 )
 
+const (
+	API = "https://api.test.nordnet.se/next/2"
+)
+
 func main() {
 	fmt.Println("Welcome to (N)ordnet (T)rading (A)lgorithm...")
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
@@ -56,7 +60,7 @@ func main() {
 	}
 
 	go func() error {
-		publicFeed, err := feed.NewPublicFeed("https://api.test.nordnet.se/next/2")
+		publicFeed, err := feed.NewPublicFeed(API)
 		if err != nil {
 			logger.Error("Error: %v", err)
 		}
@@ -100,7 +104,7 @@ func main() {
 	}()
 
 	go func() error {
-		privateFeed, err := feed.NewPrivateFeed("https://api.test.nordnet.se/next/2")
+		privateFeed, err := feed.NewPrivateFeed(API)
 		if err != nil {
 			logger.Error("Error: %v", err)
 		}

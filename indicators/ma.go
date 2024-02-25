@@ -1,16 +1,16 @@
 package indicators
 
-//MA is the Moving Average, other alias are SMA or SimpleMovingAverage
+// MA is the Moving Average, other alias are SMA or SimpleMovingAverage
 func MA(series []float64, period int) []float64 {
 	return SMA(series, period)
 }
 
-//SMA is the Moving Average, other alias are MA or SimpleMovingAverage
+// SMA is the Moving Average, other alias are MA or SimpleMovingAverage
 func SMA(series []float64, period int) []float64 {
 	return SimpleMovingAverage(series, period)
 }
 
-//SimpleMovingAverage to start a new moving average
+// SimpleMovingAverage to start a new moving average
 func SimpleMovingAverage(series []float64, period int) []float64 {
 	seriesLength := len(series)
 	returnSeries := make([]float64, seriesLength)
@@ -32,14 +32,14 @@ func SimpleMovingAverage(series []float64, period int) []float64 {
 	return returnSeries
 }
 
-//EMA is to start a new exponential moving average
-//EMA = Price(t) * k + EMA(y) * (1 – k)
-//t = today, y = yesterday, N = number of days in EMA, k = 2/(N+1)
+// EMA is to start a new exponential moving average
+// EMA = Price(t) * k + EMA(y) * (1 – k)
+// t = today, y = yesterday, N = number of days in EMA, k = 2/(N+1)
 func EMA(series []float64, period int) []float64 {
 	return ExponentialMovingAverage(series, period)
 }
 
-//ExponentialMovingAverage is to start a new exponential moving average
+// ExponentialMovingAverage is to start a new exponential moving average
 func ExponentialMovingAverage(series []float64, period int) []float64 {
 	//float k = 2 / (numberOfDays + 1);
 	//return todaysPrice * k + EMAYesterday * (1 – k);

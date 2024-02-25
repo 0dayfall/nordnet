@@ -30,10 +30,10 @@ func StandardDeviation(series []float64, period int) float64 {
 	lengthSeries := len(series)
 	result := make([]float64, lengthSeries)
 
-	//The average is the starting point
+	// The average is the starting point
 	ma := MA(series, period)
 
-	//The difference between each data point and the average is calculated and then the values are ^2
+	// The difference between each data point and the average is calculated and then the values are ^2
 	for i := 0; i < lengthSeries; i++ {
 		result[i] = math.Pow(series[i]-ma[i], 2)
 	}
@@ -42,7 +42,7 @@ func StandardDeviation(series []float64, period int) float64 {
 	for i := 0; i < lengthSeries; i++ {
 		result[i] = math.Sqrt(Sum(result) / float64(period))
 	}
-	//The variance is the average of these values and the standard deviation is the square root of the variance
+	// The variance is the average of these values and the standard deviation is the square root of the variance
 	return math.Sqrt(Sum(result) / float64(lengthSeries))
 }
 
