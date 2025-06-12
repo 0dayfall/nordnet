@@ -8,7 +8,7 @@ Go implementation of the Nordnet External API.
 
 https://api.test.nordnet.se/api-docs/index.html
 
-This is a maintained fork of nordnet(https://github.com/denro/nordnet), which appears to be inactive since 2018.
+This is a maintained fork of nordnet(https://github.com/denro/nordnet), which appears to be inactive since 2013.
 
 ## Installation
 
