@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,11 +13,10 @@ import (
 	"github.com/0dayfall/nordnet/api"
 	"github.com/0dayfall/nordnet/feed"
 	"github.com/0dayfall/nordnet/util"
+	"github.com/joho/godotenv"
 )
 
-const (
-	API = "https://api.test.nordnet.se/next/2"
-)
+var API = "https://api.nordnet.se/next/2"
 
 func main() {
 	fmt.Println("Welcome to (N)ordnet (T)rading (A)lgorithm...")
@@ -25,6 +25,18 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	logger.Info("listening for SIGTERM..")
 	defer stop()
+
+	err := godotenv.Load("config/config.env") // default is ".env"
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	API, ok := os.LookupEnv("NORDNET_API_URL")
+	if !ok {
+		logger.Error("NORDNET_API_URL not set, using default: %s", API)
+	} else {
+		logger.Info("Using NORDNET_API_URL: %s", API)
+	}
 
 	username, ok := os.LookupEnv("NORDNET_USER")
 	if !ok {
@@ -38,9 +50,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	pemPath, ok := os.LookupEnv("NORDNET_PEM")
+	pemPath, ok := os.LookupEnv("NORDNET_PEM_FILE")
 	if !ok {
-		logger.Error("NORDNET_PEM not set")
+		logger.Error("NORDNET_PEM_FILE not set")
 		os.Exit(3)
 	}
 
