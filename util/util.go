@@ -11,9 +11,25 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 const Stockholm_Timezone = "Europe/Stockholm"
+
+func SafeGo(name string, fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Error().
+					Str("goroutine", name).
+					Interface("panic", r).
+					Msg("panic recovered")
+			}
+		}()
+		fn()
+	}()
+}
 
 func GenerateCredentials(username, password, rawPem []byte) (cred string, err error) {
 	var loc *time.Location

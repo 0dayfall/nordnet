@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/0dayfall/nordnet/util/models"
@@ -19,23 +20,25 @@ func NewPrivateFeed(address string) (*PrivateFeed, error) {
 }
 
 // Starts reading from the connection and sends data through given channels
-func (pf *PrivateFeed) Dispatch(msgChan chan *PrivateMsg, errChan chan error) {
-	go func(d *json.Decoder, mc chan<- *PrivateMsg, ec chan<- error) {
-		var (
-			pMsg *PrivateMsg
-			err  error
-		)
+func (pf *PrivateFeed) Dispatch(ctx context.Context, msgChan chan *PrivateMsg, errChan chan error) {
+	go func() {
+		defer close(msgChan)
+		defer close(errChan)
 
 		for {
-			pMsg = new(PrivateMsg)
-			if err = d.Decode(pMsg); err != nil {
-				ec <- err
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				pMsg := new(PrivateMsg)
+				if err := pf.decoder.Decode(pMsg); err != nil {
+					errChan <- err
+					return
+				}
+				msgChan <- pMsg
 			}
-			msgChan <- pMsg
 		}
-	}(pf.decoder, msgChan, errChan)
-
-	return
+	}()
 }
 
 // Order data section in the private message
@@ -43,9 +46,6 @@ type PrivateOrder models.Order
 
 // Trade data section in the private message
 type PrivateTrade models.Trade
-
-// Represents the messages sent on the private feed
-type PrivateMsg FeedMsg
 
 // Implements the Unmarshaler interface
 // decodes the json into proper data types depending on the type field

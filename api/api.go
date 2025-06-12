@@ -69,7 +69,8 @@ func NewAPITestClient(credentials string) *APIClient {
 	}
 }
 
-// Information about the system status can be retrieved by this HTTP request. This is the only service that can be called without authentication.
+// Information about the system status can be retrieved by this HTTP request.
+// This is the only service that can be called without authentication.
 func (c *APIClient) SystemStatus() (res *SystemStatus, err error) {
 	res = &SystemStatus{}
 	err = c.Perform("GET", "", nil, res)
@@ -111,7 +112,9 @@ func (c *APIClient) CreateOrder(accountno int64, params *Params) (res *OrderRepl
 	return
 }
 
-// Activate an inactive order. Please note that it is not possible to deactivate an order. The order must be entered as inactive.
+// Activate an inactive order.
+// Please note that it is not possible to deactivate an order.
+// The order must be entered as inactive.
 func (c *APIClient) ActivateOrder(accountno int64, orderId int64) (res *OrderReply, err error) {
 	res = &OrderReply{}
 	err = c.Perform("PUT", fmt.Sprintf("accounts/%d/orders/%d/activate", accountno, orderId), nil, res)
@@ -153,8 +156,8 @@ func (c *APIClient) Countries() (res []Country, err error) {
 	return
 }
 
-// Lookup one or more countries by country code. Multiple countries can be queried at the same time by comma separating the country codes.
-// TODO: Merge with Countries call above?
+// Lookup one or more countries by country code.
+// Multiple countries can be queried at the same time by comma separating the country codes.
 func (c *APIClient) LookupCountries(countries string) (res []Country, err error) {
 	res = []Country{}
 	err = c.Perform("GET", fmt.Sprintf("countries/%s", countries), nil, &res)

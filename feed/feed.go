@@ -67,6 +67,12 @@ type FeedMsg struct {
 	Data interface{} `json:"data"`
 }
 
+// Represents messages sent by the private feed
+type PrivateMsg struct {
+	Type string      `json:"t"`
+	Data interface{} `json:"d"`
+}
+
 // Used in UnmarshalJSON overrides
 type rawMsg struct {
 	Type string          `json:"type"`

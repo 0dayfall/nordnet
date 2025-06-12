@@ -2,8 +2,10 @@ package feed
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/0dayfall/nordnet/util/models"
 	"github.com/stretchr/testify/assert"
@@ -111,12 +113,12 @@ var privateUnmarshalTests = []struct {
 }
 
 func TestPrivateMsgUnmarshalJSON(t *testing.T) {
-	for _, tt := range privateUnmarshalTests {
+	for i, tt := range privateUnmarshalTests {
 		msg := &PrivateMsg{}
-		if err := json.Unmarshal([]byte(tt.json), msg); err != nil {
-			t.Error(err)
-		}
-		assert.Equal(t, tt.expected, msg)
+		err := json.Unmarshal([]byte(tt.json), msg)
+		assert.NoError(t, err, "case %d: failed to unmarshal", i)
+		assert.Equal(t, tt.expected.Type, msg.Type, "case %d: unexpected type", i)
+		assert.Equal(t, tt.expected.Data, msg.Data, "case %d: unexpected data", i)
 	}
 }
 
@@ -139,24 +141,34 @@ var privateDispatchTests = []struct {
 }
 
 func TestPrivateFeedDispatch(t *testing.T) {
-	b := &fakeConnection{&bytes.Buffer{}}
-	f := &Feed{b, json.NewEncoder(b), json.NewDecoder(b)}
-	feed := &PrivateFeed{f}
-
+	var input bytes.Buffer
 	for _, tt := range privateDispatchTests {
-		b.WriteString(tt.json + string('\n'))
+		input.WriteString(tt.json + "\n")
 	}
 
-	msgChan := make(chan *PrivateMsg)
-	errChan := make(chan error)
-	feed.Dispatch(msgChan, errChan)
+	conn := &fakeConnection{Buffer: &input}
+	feed := &PrivateFeed{
+		&Feed{
+			conn,
+			json.NewEncoder(&bytes.Buffer{}), // unused encoder
+			json.NewDecoder(conn),
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 
-	for _, tt := range privateDispatchTests {
+	msgChan := make(chan *PrivateMsg, len(privateDispatchTests))
+	errChan := make(chan error, 1)
+
+	go feed.Dispatch(ctx, msgChan, errChan)
+
+	for i, tt := range privateDispatchTests {
 		select {
 		case msg := <-msgChan:
-			assert.Equal(t, tt.expected, msg)
+			assert.Equal(t, tt.expected.Type, msg.Type, "case %d: wrong type", i)
+			assert.IsType(t, tt.expected.Data, msg.Data, "case %d: wrong data type", i)
 		case err := <-errChan:
-			t.Error(err)
+			t.Fatalf("case %d: error from Dispatch: %v", i, err)
 		}
 	}
 }

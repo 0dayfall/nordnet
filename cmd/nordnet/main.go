@@ -2,155 +2,158 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"log/slog"
+	"github.com/joho/godotenv"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/0dayfall/nordnet/api"
 	"github.com/0dayfall/nordnet/feed"
 	"github.com/0dayfall/nordnet/util"
-	"github.com/joho/godotenv"
 )
 
-var API = "https://api.nordnet.se/next/2"
+var defaultAPI = "https://api.nordnet.se/next/2"
 
 func main() {
-	fmt.Println("Welcome to (N)ordnet (T)rading (A)lgorithm...")
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+	log.Info().Msg("Welcome to (N)ordnet (T)rading (A)lgorithm...")
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	logger.Info("listening for SIGTERM..")
 	defer stop()
 
-	err := godotenv.Load("config/config.env") // default is ".env"
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	log.Info().Msg("Listening for SIGTERM or Interrupt...")
+
+	if err := godotenv.Load("config/config.env"); err != nil {
+		log.Warn().Msg(".env file not found, using environment variables")
 	}
 
-	API, ok := os.LookupEnv("NORDNET_API_URL")
-	if !ok {
-		logger.Error("NORDNET_API_URL not set, using default: %s", API)
+	apiURL := defaultAPI
+	if val, ok := os.LookupEnv("NORDNET_API_URL"); ok {
+		apiURL = val
+		log.Info().Str("url", apiURL).Msg("Using custom API URL")
 	} else {
-		logger.Info("Using NORDNET_API_URL: %s", API)
+		log.Warn().Str("default", apiURL).Msg("NORDNET_API_URL not set, using default")
 	}
 
 	username, ok := os.LookupEnv("NORDNET_USER")
 	if !ok {
-		logger.Error("NORDNET_USER not set")
-		os.Exit(1)
+		log.Fatal().Msg("NORDNET_USER not set")
 	}
 
 	password, ok := os.LookupEnv("NORDNET_PASSWORD")
 	if !ok {
-		logger.Error("NORDNET_PASSWORD not set")
-		os.Exit(2)
+		log.Fatal().Msg("NORDNET_PASSWORD not set")
 	}
 
 	pemPath, ok := os.LookupEnv("NORDNET_PEM_FILE")
 	if !ok {
-		logger.Error("NORDNET_PEM_FILE not set")
-		os.Exit(3)
+		log.Fatal().Msg("NORDNET_PEM_FILE not set")
 	}
 
-	// Read the pem file in a byte array
 	pemData, err := os.ReadFile(pemPath)
 	if err != nil {
-		logger.Error("Error: %v", err)
-		os.Exit(4)
+		log.Fatal().Err(err).Msg("failed to read PEM file")
 	}
 
-	logger.Info("Creating credentials..")
 	cred, err := util.GenerateCredentials([]byte(username), []byte(password), pemData)
 	if err != nil {
-		logger.Error("Error: %v", err)
-		os.Exit(5)
-
+		log.Fatal().Err(err).Msg("failed to generate credentials")
 	}
 
-	go func() error {
-		publicFeed, err := feed.NewPublicFeed(API)
+	// PUBLIC FEED
+	go util.SafeGo("publicFeed", func() {
+		publicFeed, err := feed.NewPublicFeed(apiURL)
 		if err != nil {
-			logger.Error("Error: %v", err)
-		}
-		loginErr := publicFeed.Login(cred, nil)
-		if err != loginErr {
-			logger.Error("Error: %v", loginErr)
+			log.Error().Err(err).Msg("failed to create public feed")
 			stop()
+			return
 		}
+
+		if err := publicFeed.Login(cred, nil); err != nil {
+			log.Error().Err(err).Msg("public feed login failed")
+			stop()
+			return
+		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 
 		msgChan := make(chan *feed.PublicMsg)
 		errChan := make(chan error)
-		publicFeed.Dispatch(msgChan, errChan)
+		publicFeed.Dispatch(ctx, msgChan, errChan)
 
 		for {
 			select {
 			case msg := <-msgChan:
 				switch msg.Type {
 				case "heartbeat":
-					logger.Info("public feed: %v", msg.Data.(struct{}))
+					log.Debug().Str("type", msg.Type).Msg("public heartbeat")
 				case "price":
-					logger.Info("public feed: %v", msg.Data.(feed.PublicPrice))
+					log.Info().Interface("price", msg.Data).Msg("price update")
 				case "trade":
-					logger.Info("public feed: %v", msg.Data.(feed.PublicTrade))
+					log.Info().Interface("trade", msg.Data).Msg("trade update")
 				case "depth":
-					logger.Info("public feed: %v", msg.Data.(feed.PublicDepth))
+					log.Info().Interface("depth", msg.Data).Msg("depth update")
 				case "trading_status":
-					logger.Info("public feed: %v", msg.Data.(feed.PublicTradingStatus))
+					log.Info().Interface("status", msg.Data).Msg("trading status")
 				case "indicator":
-					logger.Info("public feed: %v", msg.Data.(feed.PublicIndicator))
+					log.Info().Interface("indicator", msg.Data).Msg("indicator update")
 				case "news":
-					logger.Info("public feed: %v", msg.Data.(feed.PublicNews))
+					log.Info().Interface("news", msg.Data).Msg("news update")
 				}
 			case err := <-errChan:
-				logger.Error("error: %v", err)
-				return err
+				log.Error().Err(err).Msg("public feed error")
+				stop()
+				return
 			case <-ctx.Done():
-				logger.Info("Shutdown public feed")
-				return nil
+				log.Info().Msg("shutdown: public feed")
+				return
 			}
 		}
-	}()
+	})
 
-	go func() error {
-		privateFeed, err := feed.NewPrivateFeed(API)
+	// PRIVATE FEED
+	go util.SafeGo("privateFeed", func() {
+		privateFeed, err := feed.NewPrivateFeed(apiURL)
 		if err != nil {
-			logger.Error("Error: %v", err)
-		}
-		loginErr := privateFeed.Login(cred, nil)
-		if err != loginErr {
-			logger.Error("Error: %v", loginErr)
+			log.Error().Err(err).Msg("failed to create private feed")
 			stop()
+			return
 		}
+
+		if err := privateFeed.Login(cred, nil); err != nil {
+			log.Error().Err(err).Msg("private feed login failed")
+			stop()
+			return
+		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 
 		msgChan := make(chan *feed.PrivateMsg)
 		errChan := make(chan error)
-		privateFeed.Dispatch(msgChan, errChan)
+		privateFeed.Dispatch(ctx, msgChan, errChan)
 
 		for {
 			select {
 			case msg := <-msgChan:
-				logger.Info("private feed: %v", msg)
+				log.Info().Interface("private", msg).Msg("private feed message")
 			case err := <-errChan:
-				logger.Error("Error: %v", err)
-				return err
+				log.Error().Err(err).Msg("private feed error")
+				stop()
+				return
 			case <-ctx.Done():
-				logger.Info("Shutdown private feed")
-				return nil
+				log.Info().Msg("shutdown: private feed")
+				return
 			}
 		}
-	}()
+	})
 
-	// Initialize the algorithm, the input is price changes
-	// and the output is orders to be placed as comamands to the API
-	// The algorithm is a state machine that can be stopped and started
-	// and can be configured with different strategies
-	var channel chan string
-
-	go func(channel chan string) {
+	// API CLIENT
+	go util.SafeGo("apiClient", func() {
 		client := api.NewAPIClient(cred)
 		client.SystemStatus()
 		client.Login()
@@ -158,17 +161,13 @@ func main() {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Info("Shutdown API client")
+				log.Info().Msg("shutdown: API client")
 				return
 			}
 		}
-	}(channel)
+	})
 
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Info("Bye from NTA!")
-			return
-		}
-	}
+	// Main shutdown listener
+	<-ctx.Done()
+	log.Info().Msg("Bye from NTA!")
 }

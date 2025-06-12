@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"context"
 	"encoding/json"
 )
 
@@ -17,22 +18,23 @@ func NewPublicFeed(address string) (*PublicFeed, error) {
 	return &PublicFeed{f}, err
 }
 
-// Starts reading from the connection and sends data through given channels
-func (pf *PublicFeed) Dispatch(msgChan chan *PublicMsg, errChan chan error) {
+func (pf *PublicFeed) Dispatch(ctx context.Context, msgChan chan *PublicMsg, errChan chan error) {
 	go func(d *json.Decoder, mc chan<- *PublicMsg, ec chan<- error) {
-		var (
-			pMsg *PublicMsg
-			err  error
-		)
+		defer close(mc)
+		defer close(ec)
 
 		for {
-			pMsg = new(PublicMsg)
-			if err = d.Decode(pMsg); err != nil {
-				ec <- err
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				pMsg := new(PublicMsg)
+				if err := d.Decode(pMsg); err != nil {
+					ec <- err
+					return
+				}
+				mc <- pMsg
 			}
-			msgChan <- pMsg
 		}
 	}(pf.decoder, msgChan, errChan)
-
-	return
 }
